@@ -44,6 +44,7 @@ And: `plat_midi_out_room(to)` (room in the out queues, each Bluetooth link's its
 `plat_midi_in_from()` (where the last message in came from, as an out: for MIDI thru) and `plat_midi_out_link()` (a new
 USB connection); `plat_store_size` and `plat_store_head` (an object whole or not at all; its header only); big data in
 flash beyond the store with `plat_data*`, in the data area and two more windows (`PLAT_XDATA0`, `PLAT_XDATA1`).
+For controller feedback without waiting on USB, use `plat_sysex_try_send`; see [plat.h](include/plat.h) for its contract.
 
 ## Bluetooth and WiFi
 
@@ -130,29 +131,6 @@ For example, `tools/fm1_remote.py listen tap REC wait 3000 screen log`.
 The site's installer page (`tools/make_site.py`, from `web/installer.html`) reads the same crash record and log in
 Chrome or Edge: "Report a problem" shows them, ready to copy, so a player can send them without Python. The record
 survives a restart, not switching off.
-
-### App SysEx without waiting for USB
-
-For periodic state or a custom controller protocol, call `plat_sysex_try_send`
-from the main loop with one complete `F0 .. F7` frame. It returns 0 only when the
-whole frame was queued, or -1 without queuing any bytes. It refuses a disconnected
-or suspended USB link, a busy sender, an active backup, insufficient room, or an
-invalid frame length/boundary. Success does not confirm host receipt.
-`plat_usb_connected()` can avoid preparing a snapshot while disconnected; the
-send still makes its own connection/capacity checks.
-
-The default ring holds 128 USB-MIDI packets (512 bytes of RAM), allowing a frame
-of up to 384 bytes. An app can define `SXQ` in app.h to raise that limit. Each
-packet costs four bytes of RAM and holds up to three SysEx bytes. Copying masks
-interrupts, so large frames cost interrupt latency. Keep frames bounded and send
-at a limited rate. On refusal, retain only the latest state or retry on a later
-main-loop iteration; do not busy-wait. The caller supplies MIDI-safe 7-bit data.
-
-The host and browser use the same frame limits and model an immediately draining
-USB connection. Set `FM1B_SYSEX_LOG=path.syx` for a raw native-host capture of this
-API's frames (opened once, truncated on first use). Logging is synchronous test
-instrumentation, not a simulation of USB timing. The existing `plat_sysex_send`
-API and its transfer behavior remain unchanged.
 
 ## Moving a Felucca-based firmware here
 
