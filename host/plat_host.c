@@ -535,6 +535,7 @@ const uint8_t *plat_res(uint32_t *len)
     return res_there ? fm1b_res_data : 0;
 }
 #endif
+#include "sysex.c"
 /* no host to pull from (an app's transfer is tested on its own, or by writing the flash: "data") */
 int plat_host_read(uint32_t addr, uint8_t *dst, uint32_t n) { (void)addr, (void)dst, (void)n; return -1; }
 void plat_host_patience(uint32_t try_ms, uint32_t total_ms) { (void)try_ms, (void)total_ms; }
