@@ -131,6 +131,29 @@ The site's installer page (`tools/make_site.py`, from `web/installer.html`) read
 Chrome or Edge: "Report a problem" shows them, ready to copy, so a player can send them without Python. The record
 survives a restart, not switching off.
 
+### App SysEx without waiting for USB
+
+For periodic state or a custom controller protocol, call `plat_sysex_try_send`
+from the main loop with one complete `F0 .. F7` frame. It returns 0 only when the
+whole frame was queued, or -1 without queuing any bytes. It refuses a disconnected
+or suspended USB link, a busy sender, an active backup, insufficient room, or an
+invalid frame length/boundary. Success does not confirm host receipt.
+`plat_usb_connected()` can avoid preparing a snapshot while disconnected; the
+send still makes its own connection/capacity checks.
+
+The default ring holds 128 USB-MIDI packets (512 bytes of RAM), allowing a frame
+of up to 384 bytes. An app can define `SXQ` in app.h to raise that limit. Each
+packet costs four bytes of RAM and holds up to three SysEx bytes. Copying masks
+interrupts, so large frames cost interrupt latency. Keep frames bounded and send
+at a limited rate. On refusal, retain only the latest state or retry on a later
+main-loop iteration; do not busy-wait. The caller supplies MIDI-safe 7-bit data.
+
+The host and browser use the same frame limits and model an immediately draining
+USB connection. Set `FM1B_SYSEX_LOG=path.syx` for a raw native-host capture of this
+API's frames (opened once, truncated on first use). Logging is synchronous test
+instrumentation, not a simulation of USB timing. The existing `plat_sysex_send`
+API and its transfer behavior remain unchanged.
+
 ## Moving a Felucca-based firmware here
 
 A Felucca-based firmware (GPL-3.0) can move onto fm1-base and felucca-bsp and keep its licence: their MPL-2.0 files

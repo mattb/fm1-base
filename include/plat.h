@@ -182,6 +182,18 @@ const uint8_t *plat_data(uint32_t off);   /* read in place; 0 = outside the wind
 int plat_data_erase(uint32_t off);        /* the 4 KiB sector at off (aligned); 0 = done */
 int plat_data_write(uint32_t off, const void *src, uint32_t n);   /* into erased flash, src in RAM; 0 = done */
 void plat_sysex_send(const uint8_t *frame, uint32_t n);   /* a whole SysEx frame (F0 .. F7) out over USB */
+/* Main loop only. Complete F0..F7 frame (caller supplies 7-bit data): 0 queued in
+ * full, -1 nothing queued (invalid/too large, disconnected/suspended, busy or no
+ * room). Never waits for USB. Success is enqueue, not delivery/acknowledgement.
+ * Default max: 384 bytes. Define SXQ in app.h to change the ring's packet count
+ * (4 bytes RAM/packet, up to 3 frame bytes/packet). The bounded copy masks IRQs:
+ * keep frames small and rate-limit/drop stale state rather than spinning to retry.
+ * Host/Web: connected and immediately drained, same size/framing checks. Native
+ * FM1B_SYSEX_LOG optionally captures accepted frames synchronously; file errors
+ * return -1 (the capture file may contain a partial write). Web discards frames. */
+int plat_sysex_try_send(const uint8_t *frame, uint32_t n);
+/* Configured and not suspended; does not mean queue space or an app listening. */
+int plat_usb_connected(void);
 
 /* the app's own commands in the update's SysEx framing (F0 pack7(00 59 cmd len24 body ~sum) F7: felucca-bsp ota.c),
  * an app with APP_USB_CMD: app_usb_cmd(d, n) gets each frame whose cmd the platform does not take (d: the decoded

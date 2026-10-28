@@ -115,7 +115,9 @@ static volatile uint32_t fm1_ms;  /* milliseconds since boot (TIMER4-based, TIME
 #define FM1B_USB_HOST 0
 #endif
 #define FELUCCA_USB_HOST FM1B_USB_HOST /* the USB MIDI host (plat_usb_host) */
+#ifndef SXQ
 #define SXQ 128u                  /* the SysEx send ring, in packets: a whole screen-reader SAY (ANN_MAX + 9 bytes) */
+#endif
 #include "usb.c"
 #ifndef FM1B_TRS
 #define FM1B_TRS 1
@@ -213,13 +215,8 @@ static uint8_t backup_streaming(void);
 #else
 static uint8_t backup_streaming(void) { return 0; }
 #endif
-static int ann_wire_send(const uint8_t *p, uint32_t n)   /* never waits: no room (nobody reading), a backup
-                                                          * streaming: not sent */
-{
-    if (!usb.config || usb.suspended || backup_streaming() || sx_busy || SXQ - (so_w - so_r) < (n + 2u) / 3u)
-        return -1;
-    return ota_wire_send(p, n);
-}
+#include "sysex.c"
+static int ann_wire_send(const uint8_t *p, uint32_t n) { return plat_sysex_try_send(p, n); }
 #include "panel.c"
 #if FM1B_BLE || FM1B_WIFI
 #include "radio.c"                /* the shim's platform, a radio's start; Bluetooth MIDI (FM1B_BLE, ble/: the shim, the
