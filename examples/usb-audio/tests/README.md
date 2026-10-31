@@ -51,7 +51,11 @@ two PCM16 counts across all channels. This measures channel alignment, not USB o
 analog latency. Longer captures (60 seconds or more) exercise continuity; retain
 both the PCM analysis and capture callback/timing reports.
 
-`--counter-port` also records start/end snapshots while the capture stream is open.
+`--counter-port` records a start snapshot during capture and an end snapshot after
+the callback reaches the requested length. CoreAudio may already have stopped the
+stream at the end snapshot: its alternate setting and CPU load can reflect idle
+state. Use the start snapshot for active render load; accumulated error counters
+remain useful at both points.
 Compare before/after counters for underruns, overruns, missed packets, stalls and
 audio xruns. CPU-percent is a snapshot of recent render load. Packet/frame counters
 reset on rate selection and fill extrema reset on stream start, so compare like
