@@ -6,12 +6,11 @@ when a compiled coreaudio-inspect executable exists beside this script.
 import argparse, datetime, hashlib, json, pathlib, subprocess, sys, threading, time, wave
 import sounddevice as sd
 p=argparse.ArgumentParser(description=__doc__)
-p.add_argument('--device',required=True);p.add_argument('--rate',type=int,choices=[44100,48000],required=True)
+p.add_argument('--device',required=True);p.add_argument('--rate',type=int,choices=[44100],default=44100)
 p.add_argument('--seconds',type=float,default=10);p.add_argument('--channels',type=int,default=6)
 p.add_argument('--output',type=pathlib.Path,required=True)
 p.add_argument('--expected-names',help='Comma-separated CoreAudio channel names to require')
 p.add_argument('--usb-product',help='Also read real USB descriptors and GET_CUR during capture')
-p.add_argument('--counter-port',help='Query diagnostic CC22 counters at start/end; diagnostic firmware only')
 a=p.parse_args()
 if not 1<=a.seconds<=600: p.error('seconds must be 1..600')
 choices=[(i,d) for i,d in enumerate(sd.query_devices()) if a.device.casefold() in d['name'].casefold() and d['max_input_channels']>=a.channels]
@@ -24,10 +23,6 @@ def callback(data,frames,timing,status):
  blocks.append(bytes(data));timings.append({'frames':frames,'adc_time':timing.inputBufferAdcTime,'current_time':timing.currentTime,'status':str(status)})
  received+=frames
  if received>=target: done.set();raise sd.CallbackStop
-def counters():
- if not a.counter_port:return None
- r=subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('diagnostic-counters.py')),'--port',a.counter_port],capture_output=True,text=True)
- return json.loads(r.stdout) if r.returncode==0 else {'error':r.stderr or r.stdout}
 start=time.monotonic(); inspection=None; usb_inspection=None
 with sd.RawInputStream(device=index,samplerate=a.rate,channels=a.channels,dtype='int16',callback=callback) as stream:
  inspector=pathlib.Path(__file__).with_name('coreaudio-inspect')
@@ -37,10 +32,8 @@ with sd.RawInputStream(device=index,samplerate=a.rate,channels=a.channels,dtype=
  if a.usb_product:
   r=subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('usb-descriptors.py')),'--product',a.usb_product,'--get-rate'],capture_output=True,text=True)
   usb_inspection=json.loads(r.stdout) if r.returncode==0 else {'error':r.stderr or r.stdout}
- counters_start=counters()
  if not done.wait(a.seconds+15): raise RuntimeError('capture timed out')
  duration=time.monotonic()-start
- counters_end=counters()
  pcm=b''.join(blocks)[:target*a.channels*2]
  if len(pcm)!=target*a.channels*2: raise RuntimeError('short capture')
 with wave.open(str(a.output.with_suffix('.wav')),'wb') as f:
@@ -59,7 +52,7 @@ if a.usb_product:
  if not usb_inspection or 'error' in usb_inspection: format_errors.append('USB descriptor/current-rate inspection unavailable')
  elif not any(ep.get('current_rate')==a.rate for ep in usb_inspection['capture_endpoints']): format_errors.append('actual USB GET_CUR rate mismatch or unavailable')
 gaps=[(b['adc_time']-x['adc_time'])-x['frames']/a.rate for x,b in zip(timings,timings[1:])]
-report={'date':datetime.datetime.now(datetime.timezone.utc).isoformat(),'device':dict(device),'requested_rate':a.rate,'channels':a.channels,'frames':target,'wall_seconds':duration,'status':'PASS' if not errors and not format_errors else 'FAIL','format_errors':format_errors,'callback_errors':errors,'callback_count':len(timings),'adc_gap_max_abs_seconds':max(map(abs,gaps),default=0),'coreaudio_during_stream':inspection,'usb_during_stream':usb_inspection,'diagnostic_counters_start':counters_start,'diagnostic_counters_end':counters_end,'pcm_sha256':hashlib.sha256(pcm).hexdigest(),'limitations':['CoreAudio capture; not a USB wire trace','Frame count is requested, not an independent device-rate measurement','Clock/transport controls must be set separately; this tool never changes them']}
+report={'date':datetime.datetime.now(datetime.timezone.utc).isoformat(),'device':dict(device),'requested_rate':a.rate,'channels':a.channels,'frames':target,'wall_seconds':duration,'status':'PASS' if not errors and not format_errors else 'FAIL','format_errors':format_errors,'callback_errors':errors,'callback_count':len(timings),'adc_gap_max_abs_seconds':max(map(abs,gaps),default=0),'coreaudio_during_stream':inspection,'usb_during_stream':usb_inspection,'pcm_sha256':hashlib.sha256(pcm).hexdigest(),'limitations':['CoreAudio capture; not a USB wire trace','Frame count is requested, not an independent device-rate measurement','Clock/transport controls must be set separately; this tool never changes them']}
 a.output.with_suffix('.json').write_text(json.dumps(report,indent=2)+'\n')
 a.output.with_suffix('.timing.json').write_text(json.dumps(timings,indent=2)+'\n')
 print(json.dumps(report,indent=2))

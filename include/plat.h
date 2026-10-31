@@ -241,9 +241,6 @@ void plat_usb_audio_full(int on);
  * The stereo buffer is read-only; analog and Bluetooth remain stereo.
  * fm1.toml usb_audio_channels = ["Master L", "Master R", ...] selects 1..6
  * named channels; default is ordinary stereo. Non-stereo requires the callback.
- * usb_audio_48k = true also advertises 48000 Hz, resampled by the USB driver.
- * Capture buffers and FIR work grow with channel count. Measure render load at
- * each rate; FM1B_UAC_DEEP=1 adds buffering when the shallow reserve is insufficient.
  * Simulators invoke the callback every render; WASM web_usb_audio exposes the
  * last block at 44100 Hz (web_usb_channels / web_usb_frames give its shape). */
 

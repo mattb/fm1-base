@@ -54,5 +54,5 @@ else:
   if jumps:fail.append(f'channel {ch+1} discontinuities')
   rows.append({'channel':ch+1,'active':True,'expected_hz':expected,'measured_hz':actual,'peak_pcm16':peak,'rms_pcm16':rms,'other_tone_leakage_db':leakage_db,'min_10ms_rms':minimum_rms,'large_sample_jumps':jumps})
  result={'channels':rows}
-report={'result':'FAIL' if fail else 'PASS','wav':str(a.wav),'mode':a.mode,'sample_rate':rate,'frames_analyzed':len(pcm),'failures':fail,'analysis':result,'limits':['Host conversion may introduce <=2 PCM16 counts of difference','No analog output measurement','No proof against every possible dropped/repeated packet; inspect firmware counters for sustained timing claims']}
+report={'result':'FAIL' if fail else 'PASS','wav':str(a.wav),'mode':a.mode,'sample_rate':rate,'frames_analyzed':len(pcm),'failures':fail,'analysis':result,'limits':['Host conversion may introduce <=2 PCM16 counts of difference','No analog output measurement','No proof against every possible dropped/repeated packet']}
 path=a.output or a.wav.with_suffix('.analysis.json');path.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2));raise SystemExit(bool(fail))

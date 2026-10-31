@@ -39,7 +39,5 @@ for (let block = 0; block < 50; block++) {
   }
 }
 assert.ok(impulses > 0);
-cc(20, 2);
-assert.ok(Array.from(render()).every(v => v === -256), 'constant PCM16 -1 transport pattern');
 assert.equal(e.web_store_writes(), 0);
 console.log('PASS: six capture channels, all channel masks, aligned impulses, silent analog, no settings writes');

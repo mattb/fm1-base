@@ -44,7 +44,6 @@ APP_DIR holds the app (app.h, app.c, its sources) and its fm1.toml:
   ble_no_pairing = true      with ble_trim: no pairing or encryption either (~19 KB more flash; iOS and macOS connect)
   ble_central = true         and the FM-1 connects to Bluetooth MIDI devices too (FM1B_BLE_CENTRAL), beside a computer
   usb_audio_channels = ["Master L", "Master R"]   optional 1..6 named capture channels (APP_USB_AUDIO for non-stereo)
-  usb_audio_48k = true       advertise 48 kHz capture too, using BSP resampling (default false)
   usb_audio_in = true        the FM-1 recordable over USB (FM1B_UAC; the default: true)
   usb_audio_out = true       a computer plays through the FM-1 over USB (FM1B_UAC_OUT; the default: true)
   usb_audio_first = true     the USB audio streaming interfaces listed first in the audio control collection
@@ -957,10 +956,6 @@ def usb_audio_flags():
             raise SystemExit("usb_audio_channels must be 1..6 printable ASCII names (1..31 characters each)")
         flags += [f"-DFM1B_UAC_CHANNELS={len(names)}",
                   "-DFM1B_UAC_CHANNEL_NAMES=" + ",".join(c_str(s) for s in names)]
-    if "usb_audio_48k" in CONF:
-        if not isinstance(CONF["usb_audio_48k"], bool):
-            raise SystemExit("usb_audio_48k must be true or false")
-        flags += [f"-DFM1B_UAC_48K={int(CONF['usb_audio_48k'])}"]
     return flags
 
 

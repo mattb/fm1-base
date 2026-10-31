@@ -2,13 +2,12 @@
 
 These tools exercise the [muted USB diagnostic](../). Use its firmware for the
 tone and impulse tests: it keeps analog output zero at every MASTER position.
-`diagnostic-midi.py` sends its mode/mask CCs; `diagnostic-counters.py` requests a
-counter snapshot. Both check the USB product before sending MIDI. They neither
-save settings nor change MASTER. The other Python tools only read the device or
-record audio. `coreaudio-rate` explicitly changes the selected device's rate.
+`diagnostic-midi.py` sends its mode/mask CCs after checking the USB product.
+It neither saves settings nor changes MASTER. The other tools only read the
+device or record audio.
 
 The capture checks require macOS: CoreAudio's physical format and a USB endpoint
-GET_CUR read distinguish a real rate change from host resampling. The WAV analyzer
+GET_CUR read verify that the device streams at 44.1 kHz. The WAV analyzer
 runs anywhere Python and NumPy are available. Swift tools require Apple's command
 line developer tools. From this directory:
 
@@ -17,7 +16,6 @@ brew install libusb portaudio
 python3 -m venv .venv
 .venv/bin/pip install numpy sounddevice mido python-rtmidi pyusb
 swiftc coreaudio-inspect.swift -o coreaudio-inspect
-swiftc coreaudio-rate.swift -o coreaudio-rate
 mkdir -p out
 ```
 
@@ -28,18 +26,14 @@ MIDI port in `--port`; the scripts also verify the current USB product. Replace
 `AUDIO_NAME` and `MIDI_PORT` below with those names.
 
 ```sh
-./coreaudio-rate 'AUDIO_NAME' 44100
 .venv/bin/python diagnostic-midi.py --port 'MIDI_PORT' --mode 0 --mask 63
-.venv/bin/python diagnostic-counters.py --port 'MIDI_PORT' --output out/before.json
 .venv/bin/python capture.py --device 'AUDIO_NAME' --rate 44100 --seconds 10 \
   --expected-names 'Tone 331,Tone 487,Tone 683,Tone 947,Tone 1289,Tone 1747' \
-  --usb-product 'FM1 USB Audio Test' --counter-port 'MIDI_PORT' --output out/tones-44100
-.venv/bin/python diagnostic-counters.py --port 'MIDI_PORT' --output out/after.json
+  --usb-product 'FM1 USB Audio Test' --output out/tones-44100
 .venv/bin/python analyze.py out/tones-44100.wav --expected-peak-dbfs -18
 ```
 
-Repeat at 48000 Hz, explicitly setting that device rate first. A successful client
-stream request alone does not establish the physical rate. `capture.py` fails if
+A successful client stream request alone does not establish the physical rate. `capture.py` fails if
 physical format differs, and `--usb-product` additionally requires GET_CUR to
 match during capture. The USB probe never claims interfaces or detaches drivers;
 if the OS denies access, record that limitation rather than infer a device rate.
@@ -51,16 +45,7 @@ two PCM16 counts across all channels. This measures channel alignment, not USB o
 analog latency. Longer captures (60 seconds or more) exercise continuity; retain
 both the PCM analysis and capture callback/timing reports.
 
-`--counter-port` records a start snapshot during capture and an end snapshot after
-the callback reaches the requested length. CoreAudio may already have stopped the
-stream at the end snapshot: its alternate setting and CPU load can reflect idle
-state. Use the start snapshot for active render load; accumulated error counters
-remain useful at both points.
-Compare before/after counters for underruns, overruns, missed packets, stalls and
-audio xruns. CPU-percent is a snapshot of recent render load. Packet/frame counters
-reset on rate selection and fill extrema reset on stream start, so compare like
-stream states. A clean sample count alone cannot establish continuity. Save the
-firmware hash, descriptor/format reports, WAV files, counters and analysis together.
+Save the firmware hash, descriptor/format reports, WAV files and analysis together.
 Reopening capture tests stream recovery; cable unplug/replug is a separate test.
 
 The checks do not measure analog silence: that comes from the diagnostic's source

@@ -7,5 +7,4 @@ ble = false
 usb_audio_in = true
 usb_audio_out = false
 usb_audio_first = true
-usb_audio_48k = true
 usb_audio_channels = ["Tone 331", "Tone 487", "Tone 683", "Tone 947", "Tone 1289", "Tone 1747"]
