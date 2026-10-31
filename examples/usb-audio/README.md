@@ -31,3 +31,8 @@ audio-xruns, rate-sets, alternate-setting. Read before and during/after capture;
 compare deltas without resetting counters. Packet/frame counters reset on rate
 selection, and fill extrema reset when streaming starts. The simulated host has
 zero BSP counters. Replies retry without blocking when USB MIDI is busy.
+
+Six-channel 48 kHz resampling uses the existing `FM1B_UAC_DEEP=1` option
+to keep a full render in reserve. The default shallow ring suits shorter renders;
+its small reserve can run dry even when the audio interrupt meets its deadline.
+The diagnostic opts in explicitly, leaving existing firmware defaults unchanged.

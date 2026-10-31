@@ -2,6 +2,8 @@
 #pragma once
 #include "plat.h"
 #define APP_NAME "USBTEST"
+/* Six-channel 48 kHz resampling exceeds the shallow ring render budget. */
+#define FM1B_UAC_DEEP 1
 #define APP_USB_AUDIO
 #define APP_HOST_EXPECT
 enum { OBJ_PANEL, OBJ_NOBJ };
