@@ -220,17 +220,29 @@ void plat_host_patience(uint32_t try_ms, uint32_t total_ms);   /* each try's wai
 /* USB audio full (FM1B_UAC): 1, the USB audio input at full level (the app's render at gain 4096), MASTER for the
  * speaker and headphones only; 0, both at MASTER (the default) */
 void plat_usb_audio_full(int on);
-/* Optional capture stems: define APP_USB_AUDIO in app.h and provide
- * void app_usb_audio(int32_t *capture, const int32_t *stereo, uint32_t n).
+/* Optional capture stems: define APP_USB_CAPTURE in app.h and provide
+ * void app_usb_capture(int32_t *capture, const int32_t *stereo, uint32_t n).
  * Called in the audio interrupt after app_render (and USB playback mixing), before
  * the full-level mode's analog MASTER scaling, only while capture is active.
  * Fill every sample: n interleaved frames, FM1B_UAC_CHANNELS channels, signed 24-bit
  * at 44100 Hz. Reuse stems from app_render; do not advance the engine again.
  * The stereo buffer is read-only; analog and Bluetooth remain stereo.
- * fm1.toml usb_audio_channels = ["Master L", "Master R", ...] selects 1..6
+ * fm1.toml usb_audio_capture_channels = ["Master L", "Master R", ...] selects 1..6
  * named channels; default is ordinary stereo. Non-stereo requires the callback.
  * Simulators invoke the callback every render; WASM web_usb_audio exposes the
  * last block at 44100 Hz (web_usb_channels / web_usb_frames give its shape). */
+/* Optional USB playback: define APP_USB_PLAYBACK in app.h and provide
+ * void app_usb_playback(const int32_t *input, uint32_t n).
+ * Called before app_render in the audio interrupt: n interleaved frames,
+ * FM1B_UAC_OUT_CHANNELS signed 24-bit samples at 44100 Hz, independent of MASTER.
+ * The buffer is valid only for this call; consume or copy it without advancing
+ * the engine. Missing input is silence. This hook replaces automatic playback
+ * mixing; the app decides what reaches its stereo analog output and USB capture.
+ * usb_audio_playback_channels = ["Input L", "Input R", ...] selects 1..6 named
+ * channels. Non-stereo requires the hook; without either, stereo mixing is unchanged.
+ * Simulators pass a silent block; WASM tests may write a repeating block through
+ * web_usb_playback (web_usb_playback_channels / web_usb_frames give its shape).
+ * Both USB directions use PCM16 at 44100 Hz; buffer memory grows with channel count. */
 
 /* the keys' velocity and pressure (an app with APP_KEY_SENSE): on, the scan reads the keys on the analog rows and
  * hands each reading to the app (app_key_sample, app_key_probe); off by default */

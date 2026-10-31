@@ -91,6 +91,10 @@ static volatile uint32_t fm1_ms;  /* milliseconds since boot (TIMER4-based, TIME
 #define FM1B_UAC_OUT 1            /* the computer plays through the FM-1 (USB audio output) */
 #endif
 #define FELUCCA_UAC_OUT FM1B_UAC_OUT
+#define FELUCCA_UAC_OUT_CHANNELS FM1B_UAC_OUT_CHANNELS
+#ifdef FM1B_UAC_OUT_CHANNEL_NAMES
+#define FELUCCA_UAC_OUT_CHANNEL_NAMES FM1B_UAC_OUT_CHANNEL_NAMES
+#endif
 #ifndef FM1B_UAC_DEEP
 #define FM1B_UAC_DEEP 0           /* 1: the USB audio input holds a half more (renders past ~40 % of their time
                                    * otherwise run its ring dry: holds in the recording); its 4 KB ring in the pool */

@@ -33,6 +33,11 @@ static void web_audio(const int32_t *blk, uint32_t n)
 __attribute__((used, visibility("default"))) int32_t *web_usb_audio(void) { return host_usb_capture; }
 __attribute__((used, visibility("default"))) uint32_t web_usb_channels(void) { return FM1B_UAC_CHANNELS; }
 __attribute__((used, visibility("default"))) uint32_t web_usb_frames(void) { return APP_BLOCK; }
+#ifdef APP_USB_PLAYBACK
+/* Write one repeating engine block for simulated USB playback; initially silence. */
+__attribute__((used, visibility("default"))) int32_t *web_usb_playback(void) { return host_usb_playback; }
+__attribute__((used, visibility("default"))) uint32_t web_usb_playback_channels(void) { return FM1B_UAC_OUT_CHANNELS; }
+#endif
 static float out_l[1024], out_r[1024];
 __attribute__((used, visibility("default"))) float *web_out_l(void) { return out_l; }
 __attribute__((used, visibility("default"))) float *web_out_r(void) { return out_r; }

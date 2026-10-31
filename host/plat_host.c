@@ -998,13 +998,19 @@ static void sim_ms_begin(uint32_t ms)
 }
 
 static int32_t host_usb_capture[APP_BLOCK * FM1B_UAC_CHANNELS];
+#ifdef APP_USB_PLAYBACK
+static int32_t host_usb_playback[APP_BLOCK * FM1B_UAC_OUT_CHANNELS];
+#endif
 static void sim_render(int32_t *blk)            /* one APP_BLOCK-frame block, as the device renders it */
 {
     double t0 = now_ns(), dt;
     uint32_t k;
+#ifdef APP_USB_PLAYBACK
+    app_usb_playback(host_usb_playback, APP_BLOCK);
+#endif
     app_render(blk, APP_BLOCK, uac_full ? 4096u : APP_GAIN(master));
-#ifdef APP_USB_AUDIO
-    app_usb_audio(host_usb_capture, blk, APP_BLOCK);
+#ifdef APP_USB_CAPTURE
+    app_usb_capture(host_usb_capture, blk, APP_BLOCK);
 #else
     memcpy(host_usb_capture, blk, sizeof host_usb_capture);
 #endif

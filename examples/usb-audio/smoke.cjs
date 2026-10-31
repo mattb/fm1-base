@@ -39,5 +39,15 @@ for (let block = 0; block < 50; block++) {
   }
 }
 assert.ok(impulses > 0);
+assert.equal(e.web_usb_playback_channels(), 6);
+const playback = new Int32Array(e.memory.buffer, e.web_usb_playback(), 256 * 6);
+cc(20, 2); cc(21, 63);
+for (let selected = 0; selected < 6; selected++) {
+  playback.fill(0);
+  for (let f = 0; f < 256; f++) playback[f * 6 + selected] = (f - 128) * 8192;
+  assert.deepEqual(render(), playback, `playback channel ${selected + 1} loops back independently`);
+}
+playback.fill(0);
+assert.ok(render().every(v => v === 0), 'silent playback must produce silent capture');
 assert.equal(e.web_store_writes(), 0);
-console.log('PASS: six capture channels, all channel masks, aligned impulses, silent analog, no settings writes');
+console.log('PASS: six capture channels, all channel masks, aligned impulses, six playback routes, silent analog, no settings writes');

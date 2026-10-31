@@ -2,6 +2,7 @@
 #include "fastmath.h"
 static uint32_t test_mode, test_mask = 63u, test_frame;
 static uint32_t test_phase[6];
+static int32_t test_input[APP_BLOCK * 6u];
 static const uint32_t test_hz[6] = {331, 487, 683, 947, 1289, 1747};
 void app_init(void) { plat_usb_audio_full(1); }
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
@@ -10,16 +11,24 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
     while (plat_midi_in(&pkt, 0)) {
         if ((pkt >> 8 & 0xf0u) != 0xb0u) continue;
         uint32_t cc = pkt >> 16 & 127u, v = pkt >> 24 & 127u;
-        if (cc == 20u && v <= 1u) { test_mode = v; test_frame = 0; }
+        if (cc == 20u && v <= 2u) { test_mode = v; test_frame = 0; }
         if (cc == 21u && v <= 63u) test_mask = v;
     }
     for (i = 0; i < 2u * n; i++) lr[i] = 0; /* Analog is always silent. */
 }
-void app_usb_audio(int32_t *capture, const int32_t *stereo, uint32_t n)
+void app_usb_playback(const int32_t *input, uint32_t n)
+{
+    memcpy(test_input, input, n * 6u * sizeof *input);
+}
+void app_usb_capture(int32_t *capture, const int32_t *stereo, uint32_t n)
 {
     uint32_t i, c;
     for (i = 0; i < n; i++) {
         for (c = 0; c < 6; c++) {
+            if (test_mode == 2u) {
+                capture[i * 6u + c] = test_mask & (1u << c) ? test_input[i * 6u + c] : 0;
+                continue;
+            }
             float v = test_mode ? (test_frame % 4410u == 0u ? 1.0f : 0.0f)
                                : fm_sinf(FM_TWO_PI * (float)test_phase[c] / 44100.0f);
             capture[i * 6u + c] = test_mask & (1u << c) ? (int32_t)(1056063.0f * v) : 0;

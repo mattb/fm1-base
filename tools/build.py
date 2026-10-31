@@ -43,7 +43,8 @@ APP_DIR holds the app (app.h, app.c, its sources) and its fm1.toml:
                              RAM: Melodee's measure ~18 KB and ~4 KB); not with ble_central
   ble_no_pairing = true      with ble_trim: no pairing or encryption either (~19 KB more flash; iOS and macOS connect)
   ble_central = true         and the FM-1 connects to Bluetooth MIDI devices too (FM1B_BLE_CENTRAL), beside a computer
-  usb_audio_channels = ["Master L", "Master R"]   optional 1..6 named capture channels (APP_USB_AUDIO for non-stereo)
+  usb_audio_capture_channels = ["Master L", "Master R"]   optional 1..6 named capture channels (APP_USB_CAPTURE for non-stereo)
+  usb_audio_playback_channels = ["Input L", "Input R"]   optional 1..6 named playback channels (APP_USB_PLAYBACK for non-stereo)
   usb_audio_in = true        the FM-1 recordable over USB (FM1B_UAC; the default: true)
   usb_audio_out = true       a computer plays through the FM-1 over USB (FM1B_UAC_OUT; the default: true)
   usb_audio_first = true     the USB audio streaming interfaces listed first in the audio control collection
@@ -946,16 +947,18 @@ def build_id():
 
 
 def usb_audio_flags():
-    """Capture layout shared by the device and its simulators."""
+    """USB channel layouts shared by the device and its simulators."""
     flags = []
-    names = CONF.get("usb_audio_channels")
-    if names is not None:
-        if (not isinstance(names, list) or not 1 <= len(names) <= 6 or
-                any(not isinstance(s, str) or not 1 <= len(s) <= 31 or
-                    any(ord(c) < 32 or ord(c) > 126 for c in s) for s in names)):
-            raise SystemExit("usb_audio_channels must be 1..6 printable ASCII names (1..31 characters each)")
-        flags += [f"-DFM1B_UAC_CHANNELS={len(names)}",
-                  "-DFM1B_UAC_CHANNEL_NAMES=" + ",".join(c_str(s) for s in names)]
+    for key, macro in (("usb_audio_capture_channels", "FM1B_UAC"),
+                       ("usb_audio_playback_channels", "FM1B_UAC_OUT")):
+        names = CONF.get(key)
+        if names is not None:
+            if (not isinstance(names, list) or not 1 <= len(names) <= 6 or
+                    any(not isinstance(s, str) or not 1 <= len(s) <= 31 or
+                        any(ord(c) < 32 or ord(c) > 126 for c in s) for s in names)):
+                raise SystemExit(f"{key} must be 1..6 printable ASCII names (1..31 characters each)")
+            flags += [f"-D{macro}_CHANNELS={len(names)}",
+                      f"-D{macro}_CHANNEL_NAMES=" + ",".join(c_str(s) for s in names)]
     return flags
 
 
