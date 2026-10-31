@@ -206,8 +206,6 @@ reader (over SysEx) work as in the browser emulator. Saved objects and the data 
 state. There is no radio, no USB host and no environment (`getenv` returns nothing). `tests/rfm1_test.mjs FILE`
 drives a file as a host app does.
 
-For controller feedback without waiting on USB, use `plat_sysex_try_send`; see `plat.h` for its contract.
-
 ## Moving a Felucca-based firmware here
 
 A Felucca-based firmware (GPL-3.0) can move onto fm1-base and felucca-bsp and keep its licence: their MPL-2.0 files
