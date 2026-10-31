@@ -1,0 +1,4 @@
+.venv/
+coreaudio-inspect
+coreaudio-rate
+out/

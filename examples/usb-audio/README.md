@@ -14,10 +14,20 @@ Build with `python tools/build.py examples/usb-audio` (or `--host` / `--web`).
 After the web build, `node examples/usb-audio/smoke.cjs` checks all channel masks,
 impulse alignment, silent analog output, and absence of settings writes. The
 WASM capture export is the last engine block at 44.1 kHz; USB descriptors,
-packetization and rate negotiation require the hardware capture tests.
+packetization and rate negotiation require the [hardware capture tests](tests/).
 
 An app using this interface defines `APP_USB_AUDIO` and fills the complete buffer
 in `app_usb_audio(capture, stereo, n)`. The input stereo buffer is the physical mix;
 stems can be cached during `app_render`. This example generates independent test
 signals in the callback to keep analog output silent. See `include/plat.h` for the
 callback contract and `fm1.toml` here for channel names and sample-rate options.
+
+CC22 requests a diagnostic counter snapshot; its value is echoed in the reply.
+The main loop sends `F0 7D 55 41 01 token`, then 17 unsigned 32-bit counters,
+then `F7`. Each counter occupies five least-significant-first 7-bit bytes.
+The fields are: rate, starts, packets, frames, underruns, overruns, missed,
+stalls, adjust-up, adjust-down, fill-low, fill-high, fill-current, CPU-percent,
+audio-xruns, rate-sets, alternate-setting. Read before and during/after capture;
+compare deltas without resetting counters. Packet/frame counters reset on rate
+selection, and fill extrema reset when streaming starts. The simulated host has
+zero BSP counters. Replies retry without blocking when USB MIDI is busy.
