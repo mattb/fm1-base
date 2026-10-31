@@ -11,7 +11,7 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
     while (plat_midi_in(&pkt, 0)) {
         if ((pkt >> 8 & 0xf0u) != 0xb0u) continue;
         uint32_t cc = pkt >> 16 & 127u, v = pkt >> 24 & 127u;
-        if (cc == 20u && v <= 1u) { test_mode = v; test_frame = 0; }
+        if (cc == 20u && v <= 2u) { test_mode = v; test_frame = 0; }
         if (cc == 21u && v <= 63u) test_mask = v;
         if (cc == 22u) test_query = v + 1u;
     }
@@ -24,7 +24,8 @@ void app_usb_audio(int32_t *capture, const int32_t *stereo, uint32_t n)
         for (c = 0; c < 6; c++) {
             float v = test_mode ? (test_frame % 4410u == 0u ? 1.0f : 0.0f)
                                : fm_sinf(FM_TWO_PI * (float)test_phase[c] / 44100.0f);
-            capture[i * 6u + c] = (test_mask & (1u << c)) ? (int32_t)(1056063.0f * v) : 0;
+            capture[i * 6u + c] = !(test_mask & (1u << c)) ? 0 :
+                test_mode == 2u ? -256 : (int32_t)(1056063.0f * v);
             test_phase[c] = (test_phase[c] + test_hz[c]) % 44100u;
         }
         test_frame++;

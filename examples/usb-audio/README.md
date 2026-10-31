@@ -36,3 +36,7 @@ Six-channel 48 kHz resampling uses the existing `FM1B_UAC_DEEP=1` option
 to keep a full render in reserve. The default shallow ring suits shorter renders;
 its small reserve can run dry even when the audio interrupt meets its deadline.
 The diagnostic opts in explicitly, leaving existing firmware defaults unchanged.
+
+CC20 mode 2 outputs constant PCM16 -1 on enabled channels, exercising USB
+packets rich in one bits. Analog output stays zero. Use it to check transport
+counters and host stream stability, then restore tone mode 0.

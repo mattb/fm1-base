@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Set only documented muted diagnostic modes, on an exact product MIDI port."""
 import argparse,mido,json,subprocess,sys,pathlib
-p=argparse.ArgumentParser();p.add_argument('--port',help='Exact MIDI port when macOS caches an older name');p.add_argument('--mode',type=int,choices=[0,1],required=True);p.add_argument('--mask',type=int,choices=range(64),default=63);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--port',help='Exact MIDI port when macOS caches an older name');p.add_argument('--mode',type=int,choices=[0,1,2],required=True);p.add_argument('--mask',type=int,choices=range(64),default=63);a=p.parse_args()
 probe=subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('usb-descriptors.py')),'--product','FM1 USB Audio Test'],capture_output=True,text=True,check=True)
 assert json.loads(probe.stdout)['product']=='FM1 USB Audio Test'
 ports=[s for s in mido.get_output_names() if (s==a.port if a.port else 'FM1 USB Audio Test' in s)]
