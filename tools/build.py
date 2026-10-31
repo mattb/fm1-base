@@ -955,9 +955,8 @@ def usb_audio_flags():
                 any(not isinstance(s, str) or not 1 <= len(s) <= 31 or
                     any(ord(c) < 32 or ord(c) > 126 for c in s) for s in names)):
             raise SystemExit("usb_audio_channels must be 1..6 printable ASCII names (1..31 characters each)")
-        import json
         flags += [f"-DFM1B_UAC_CHANNELS={len(names)}",
-                  "-DFM1B_UAC_CHANNEL_NAMES=" + ",".join(json.dumps(s) for s in names)]
+                  "-DFM1B_UAC_CHANNEL_NAMES=" + ",".join(c_str(s) for s in names)]
     if "usb_audio_48k" in CONF:
         if not isinstance(CONF["usb_audio_48k"], bool):
             raise SystemExit("usb_audio_48k must be true or false")

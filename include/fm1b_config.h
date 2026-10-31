@@ -40,6 +40,3 @@
 #if FM1B_UAC_CHANNELS != 2 && !defined(APP_USB_AUDIO)
 #error "A non-stereo USB layout requires APP_USB_AUDIO"
 #endif
-#ifdef APP_USB_AUDIO
-void app_usb_audio(int32_t *capture, const int32_t *stereo, uint32_t n);
-#endif

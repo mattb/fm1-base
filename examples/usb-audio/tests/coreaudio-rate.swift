@@ -16,11 +16,6 @@ func ids(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector, _ sco
     guard AudioObjectGetPropertyData(object, &a, 0, nil, &size, &result) == noErr else { return [] }
     return result
 }
-func format(_ stream: AudioObjectID, _ selector: AudioObjectPropertySelector) -> [String:Any]? {
-    var a = address(selector); var f = AudioStreamBasicDescription(); var size = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
-    guard AudioObjectGetPropertyData(stream, &a, 0, nil, &size, &f) == noErr else { return nil }
-    return ["rate":f.mSampleRate,"channels":f.mChannelsPerFrame,"bits":f.mBitsPerChannel,"bytes_per_frame":f.mBytesPerFrame,"format_id":f.mFormatID,"flags":f.mFormatFlags]
-}
 guard CommandLine.arguments.count == 3, let rate = Double(CommandLine.arguments[2]), [44100.0,48000.0].contains(rate) else { fatalError("usage: coreaudio-rate EXACT_DEVICE_NAME 44100|48000") }
 let name = CommandLine.arguments[1]
 let devices = ids(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDevices).filter { string($0,kAudioObjectPropertyName) == name }
