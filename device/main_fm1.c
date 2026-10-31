@@ -40,6 +40,9 @@ static int bta_frame(const uint8_t *p, uint32_t n);
 #if FM1B_BLE_OWN && FM1B_BLE_CENTRAL
 static int dev_frame(const uint8_t *p, uint32_t n);   /* bt_own_central.c */
 #endif
+#if FELUCCA_UAC && defined(APP_USB_AUDIO)
+static int32_t usb_capture[REND_FRAMES * FM1B_UAC_CHANNELS] PLAT_POOL;
+#endif
 static void render_block(int32_t *o)                /* ALNK0: one half, measured */
 {
     uint32_t t0 = fm1_ticks(), us, budget = HALF_FRAMES * 1000000u / FS;
@@ -77,7 +80,14 @@ static void render_block(int32_t *o)                /* ALNK0: one half, measured
                                                                                          * at MASTER */
 #endif
 #if FELUCCA_UAC
-            uac_tap(o + 2u * k, REND_FRAMES);       /* the USB audio input: the same master output */
+#ifdef APP_USB_AUDIO
+            if (uac.feed) {
+                app_usb_audio(usb_capture, o + 2u * k, REND_FRAMES);
+                uac_tap(usb_capture, REND_FRAMES);
+            }
+#else
+            uac_tap(o + 2u * k, REND_FRAMES);
+#endif
 #endif
             if (full) {                             /* the speaker and headphones: MASTER after the tap */
                 const float g = (float)gain * (1.0f / 4096.0f);

@@ -220,6 +220,18 @@ void plat_host_patience(uint32_t try_ms, uint32_t total_ms);   /* each try's wai
 /* USB audio full (FM1B_UAC): 1, the USB audio input at full level (the app's render at gain 4096), MASTER for the
  * speaker and headphones only; 0, both at MASTER (the default) */
 void plat_usb_audio_full(int on);
+/* Optional capture stems: define APP_USB_AUDIO in app.h and provide
+ * void app_usb_audio(int32_t *capture, const int32_t *stereo, uint32_t n).
+ * Called in the audio interrupt after app_render (and USB playback mixing), before
+ * the full-level mode's analog MASTER scaling, only while capture is active.
+ * Fill every sample: n interleaved frames, FM1B_UAC_CHANNELS channels, signed 24-bit
+ * at 44100 Hz. Reuse stems from app_render; do not advance the engine again.
+ * The stereo buffer is read-only; analog and Bluetooth remain stereo.
+ * fm1.toml usb_audio_channels = ["Master L", "Master R", ...] selects 1..6
+ * named channels; default is ordinary stereo. Non-stereo requires the callback.
+ * usb_audio_48k = true also advertises 48000 Hz, resampled by the USB driver.
+ * Simulators invoke the callback every render; WASM web_usb_audio exposes the
+ * last block at 44100 Hz (web_usb_channels / web_usb_frames give its shape). */
 
 /* the keys' velocity and pressure (an app with APP_KEY_SENSE): on, the scan reads the keys on the analog rows and
  * hands each reading to the app (app_key_sample, app_key_probe); off by default */

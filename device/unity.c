@@ -79,8 +79,12 @@ static volatile uint32_t fm1_ms;  /* milliseconds since boot (TIMER4-based, TIME
 #define FM1B_UAC 1
 #endif
 #define FELUCCA_UAC FM1B_UAC
+#define FELUCCA_UAC_CHANNELS FM1B_UAC_CHANNELS
+#ifdef FM1B_UAC_CHANNEL_NAMES
+#define FELUCCA_UAC_CHANNEL_NAMES FM1B_UAC_CHANNEL_NAMES
+#endif
 #ifndef FM1B_UAC_48K
-#define FM1B_UAC_48K 0            /* 48 kHz too: needs uac_fir.h, the resampler's filter (not in fm1-base yet) */
+#define FM1B_UAC_48K 0            /* 48 kHz capture too: BSP FIR resampling from the 44.1 kHz engine */
 #endif
 #define FELUCCA_UAC_48K FM1B_UAC_48K
 #ifndef FM1B_UAC_OUT
