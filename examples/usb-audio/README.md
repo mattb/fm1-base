@@ -16,7 +16,9 @@ After the web build, `node examples/usb-audio/smoke.cjs` checks all channel mask
 impulse alignment, all six playback-to-capture routes, silent analog output, and
 absence of settings writes. The
 WASM capture export is the last engine block at 44.1 kHz; USB descriptors,
-packetization and rate negotiation require the [hardware capture tests](tests/).
+packetization and rate negotiation require recordings from a physical FM1.
+The [Beets verification tools](https://github.com/mattb/fm1-beets/tree/feature/usb-audio-multichannel/tools/usb-audio-validation)
+provide the Mac capture harness and recorded test procedure.
 
 An app using this interface defines `APP_USB_CAPTURE` and fills the complete buffer
 in `app_usb_capture(capture, stereo, n)`. The input stereo buffer is the physical mix;
