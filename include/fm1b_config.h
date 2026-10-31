@@ -30,3 +30,23 @@
 #ifndef APP_BLOCK
 #define APP_BLOCK 256u                   /* frames per audio half and render: 5.8 ms at 44.1 kHz */
 #endif
+
+#ifndef FM1B_UAC_CHANNELS
+#define FM1B_UAC_CHANNELS 2
+#endif
+#if FM1B_UAC_CHANNELS < 1 || FM1B_UAC_CHANNELS > 6
+#error "USB capture supports 1..6 channels"
+#endif
+#if FM1B_UAC_CHANNELS != 2 && !defined(APP_USB_CAPTURE)
+#error "A non-stereo USB layout requires APP_USB_CAPTURE"
+#endif
+
+#ifndef FM1B_UAC_OUT_CHANNELS
+#define FM1B_UAC_OUT_CHANNELS 2
+#endif
+#if FM1B_UAC_OUT_CHANNELS < 1 || FM1B_UAC_OUT_CHANNELS > 6
+#error "USB playback supports 1..6 channels"
+#endif
+#if FM1B_UAC_OUT_CHANNELS != 2 && !defined(APP_USB_PLAYBACK)
+#error "A non-stereo USB playback layout requires APP_USB_PLAYBACK"
+#endif

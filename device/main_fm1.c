@@ -40,6 +40,12 @@ static int bta_frame(const uint8_t *p, uint32_t n);
 #if FM1B_BLE_OWN && FM1B_BLE_CENTRAL
 static int dev_frame(const uint8_t *p, uint32_t n);   /* bt_own_central.c */
 #endif
+#if FELUCCA_UAC && defined(APP_USB_CAPTURE)
+static int32_t usb_capture[REND_FRAMES * FM1B_UAC_CHANNELS] PLAT_POOL;
+#endif
+#if FELUCCA_UAC_OUT && defined(APP_USB_PLAYBACK)
+static int32_t usb_playback[REND_FRAMES * FM1B_UAC_OUT_CHANNELS] PLAT_POOL;
+#endif
 static void render_block(int32_t *o)                /* ALNK0: one half, measured */
 {
     uint32_t t0 = fm1_ticks(), us, budget = HALF_FRAMES * 1000000u / FS;
@@ -68,16 +74,28 @@ static void render_block(int32_t *o)                /* ALNK0: one half, measured
                     o[2u * k + i] = 0;
 #endif
             } else {
+#if FELUCCA_UAC_OUT && defined(APP_USB_PLAYBACK)
+                memset(usb_playback, 0, sizeof usb_playback);
+                uac_play(usb_playback, REND_FRAMES, 4096u);
+                app_usb_playback(usb_playback, REND_FRAMES);
+#endif
                 app_render(o + 2u * k, REND_FRAMES, full ? 4096u : gain);
             }
             if (radio_quiet)
                 continue;
-#if FELUCCA_UAC_OUT
+#if FELUCCA_UAC_OUT && !defined(APP_USB_PLAYBACK)
             uac_play(o + 2u * k, REND_FRAMES, full ? 4096u : master_pos * master_pos >> 12);   /* the computer's audio,
                                                                                          * at MASTER */
 #endif
 #if FELUCCA_UAC
-            uac_tap(o + 2u * k, REND_FRAMES);       /* the USB audio input: the same master output */
+#ifdef APP_USB_CAPTURE
+            if (uac.feed) {
+                app_usb_capture(usb_capture, o + 2u * k, REND_FRAMES);
+                uac_tap(usb_capture, REND_FRAMES);
+            }
+#else
+            uac_tap(o + 2u * k, REND_FRAMES);
+#endif
 #endif
             if (full) {                             /* the speaker and headphones: MASTER after the tap */
                 const float g = (float)gain * (1.0f / 4096.0f);
